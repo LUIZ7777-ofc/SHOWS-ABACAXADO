@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍍 Abacaxado Shows - Official Pay</title>
+    <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script async src="https://pay.google.com/gp/p/js/pay.js"></script>
+
+    <style>
+        :root {
+            --yellow: #FFD600; --green: #00E676; --purple: #7C3AED; --pink: #FF4081;
+            --bg: #0D0D1A; --card: #1E1E3F; --border: #2D2D5E; --text: #F0F0FF;
+        }
+        body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; }
+        
+        nav { background: rgba(13, 13, 26, 0.95); border-bottom: 1px solid var(--border); padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+        .logo { font-family: 'Righteous', cursive; color: var(--yellow); font-size: 1.6rem; cursor: pointer; }
+        .nav-links { display: flex; gap: 20px; align-items: center; }
+        .nav-links span { cursor: pointer; font-weight: bold; color: #888; transition: 0.3s; font-size: 0.9rem; }
+        .nav-links span:hover { color: var(--text); }
+        
+        .page { display: none; padding: 40px 20px; max-width: 1100px; margin: auto; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .show-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; margin-top: 30px; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 25px; transition: 0.3s; position: relative; }
+        .card:hover { border-color: var(--purple); transform: translateY(-5px); }
+        
+        /* Botão Google Pay Personalizado */
+        .gpay-container { margin-top: 15px; height: 45px; width: 100%; cursor: pointer; background-color: black; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid #555; }
+        .gpay-container:hover { background-color: #111; }
+
+        .btn { background: linear-gradient(135deg, var(--purple), var(--pink)); color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; font-weight: 900; cursor: pointer; margin-top: 15px; }
+        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 1px solid var(--border); background: #13132A; color: white; box-sizing: border-box; }
+        .auth-container { max-width: 400px; margin: 40px auto; background: var(--card); padding: 35px; border-radius: 25px; border: 1px solid var(--border); }
+        .toast { position: fixed; bottom: 25px; right: 25px; background: var(--purple); color: white; padding: 15px 30px; border-radius: 12px; display: none; z-index: 1000; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+    </style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<nav>
+    <div class="logo" onclick="navigate('home')">🍍 ABACAXADO</div>
+    <div class="nav-links">
+        <span onclick="navigate('home')">Home</span>
+        <span onclick="navigate('shows')">Shows</span>
+        <span id="linkTickets" onclick="navigate('tickets')" style="display:none">Ingressos</span>
+        <span id="linkAdmin" onclick="navigate('admin')" style="display:none">Admin⚡</span>
+        <span id="linkLogin" onclick="navigate('auth')">Entrar</span>
+        <span id="btnLogout" onclick="logout()" style="display:none; color: var(--pink)">Sair</span>
+    </div>
+</nav>
+
+<div id="home" class="page active">
+    <div style="text-align: center; margin-top: 80px;">
+        <h1 style="font-family: 'Righteous'; font-size: 4rem; color: var(--yellow);">PAGUE COM GPAY</h1>
+        <p>A forma mais rápida e segura de garantir seu show.</p>
+        <button class="btn" style="width: auto; padding: 15px 40px;" onclick="navigate('shows')">VER EVENTOS</button>
+    </div>
+</div>
+
+<div id="shows" class="page">
+    <h2 style="color: var(--yellow)">🎤 Próximos Shows</h2>
+    <div id="showsGrid" class="show-grid"></div>
+</div>
+
+<div id="auth" class="page">
+    <div class="auth-container">
+        <h2 id="authTitle" style="text-align: center; color: var(--yellow)">Login</h2>
+        <div id="loginForm">
+            <input type="email" id="email" placeholder="E-mail">
+            <input type="password" id="pass" placeholder="Senha">
+            <button class="btn" onclick="handleLogin()">ENTRAR</button>
+            <p onclick="toggleAuth()" style="text-align: center; cursor: pointer; margin-top: 15px;">Cadastre-se aqui</p>
+        </div>
+        <div id="regForm" style="display: none;">
+            <input type="text" id="regName" placeholder="Nome">
+            <input type="email" id="regEmail" placeholder="E-mail">
+            <input type="password" id="regPass" placeholder="Senha">
+            <button class="btn" onclick="handleRegister()">CRIAR CONTA</button>
+        </div>
+    </div>
+</div>
+
+<div id="tickets" class="page">
+    <h2 style="color: var(--yellow)">🎟️ Meus Ingressos</h2>
+    <div id="ticketsList" class="show-grid"></div>
+</div>
+
+<div id="admin" class="page">
+    <h2 style="color: var(--yellow)">Painel Admin</h2>
+    <div class="auth-container">
+        <input type="text" id="admName" placeholder="Artista">
+        <input type="text" id="admLoc" placeholder="Local">
+        <input type="time" id="admTime">
+        <input type="number" id="admPrice" placeholder="Preço (R$)">
+        <button class="btn" onclick="addShow()">LANÇAR SHOW</button>
+    </div>
+</div>
+
+<script>
+    // INICIALIZAÇÃO
+    emailjs.init("LmW16MfXe_I099lvk");
+    const MERCHANT_ID = "BCR2DN5TU2RMNZJQ";
+
+    let currentUser = JSON.parse(localStorage.getItem('loggedUser')) || null;
+    let events = JSON.parse(localStorage.getItem('events')) || [];
+    let userTickets = JSON.parse(localStorage.getItem('tickets')) || [];
+
+    // NAVEGAÇÃO
+    function navigate(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'shows') renderShows();
+        if(id === 'tickets') renderTickets();
+        updateUI();
+    }
+
+    // AUTH
+    function toggleAuth() {
+        const isLogin = document.getElementById('loginForm').style.display !== 'none';
+        document.getElementById('loginForm').style.display = isLogin ? 'none' : 'block';
+        document.getElementById('regForm').style.display = isLogin ? 'block' : 'none';
+    }
+
+    function handleRegister() {
+        const email = document.getElementById('regEmail').value.toLowerCase();
+        const user = { name: document.getElementById('regName').value, email, pass: document.getElementById('regPass').value, role: email === 'admin@abacaxado.com' ? 'admin' : 'user' };
+        localStorage.setItem('user_' + email, JSON.stringify(user));
+        showMsg("Conta criada!"); toggleAuth();
+    }
+
+    function handleLogin() {
+        const email = document.getElementById('email').value.toLowerCase();
+        const user = JSON.parse(localStorage.getItem('user_' + email));
+        if(user && user.pass === document.getElementById('pass').value) {
+            currentUser = user; localStorage.setItem('loggedUser', JSON.stringify(user));
+            navigate('home');
+        } else { showMsg("Erro!"); }
+    }
+
+    function logout() { localStorage.removeItem('loggedUser'); location.reload(); }
+
+    // SHOWS
+    function renderShows() {
+        const grid = document.getElementById('showsGrid');
+        grid.innerHTML = events.map(e => `
+            <div class="card">
+                <span style="color:var(--purple)">🕒 ${e.time}</span>
+                <h3>${e.name}</h3>
+                <p>📍 ${e.loc}</p>
+                <p style="color:var(--green); font-weight:900">R$ ${e.price},00</p>
+                <div class="gpay-container" onclick="processPayment(${e.id})">
+                    <img src="https://www.gstatic.com/instantbuy/svg/dark_gpay.svg" height="24">
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // GOOGLE PAY REAL
+    async function processPayment(eventId) {
+        if(!currentUser) return navigate('auth');
+        const event = events.find(e => e.id === eventId);
+
+        const paymentDataRequest = {
+            apiVersion: 2, apiVersionMinor: 0,
+            allowedPaymentMethods: [{
+                type: 'CARD',
+                parameters: { allowedAuthMethods: ["PAN_ONLY", "CRYPTOGRAM_3DS"], allowedCardNetworks: ["VISA", "MASTERCARD"] },
+                tokenizationSpecification: { type: 'PAYMENT_GATEWAY', parameters: { 'gateway': 'example', 'gatewayMerchantId': MERCHANT_ID } }
+            }],
+            transactionInfo: { totalPriceStatus: 'FINAL', totalPrice: event.price + ".00", currencyCode: 'BRL', countryCode: 'BR' },
+            merchantInfo: { merchantId: MERCHANT_ID, merchantName: 'Abacaxado Shows' }
+        };
+
+        try {
+            const paymentsClient = new google.payments.api.PaymentsClient({environment: 'PRODUCTION'});
+            const paymentData = await paymentsClient.loadPaymentData(paymentDataRequest);
+            
+            // Sucesso!
+            const ticketID = "ABX-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+            emailjs.send("service_ss5yu2i", "template_zmarw94", {
+                user_name: currentUser.name, to_email: currentUser.email,
+                event_name: event.name, event_time: event.time, ticket_id: ticketID
+            }).then(() => {
+                userTickets.push({ ...event, ticketId: ticketID });
+                localStorage.setItem('tickets', JSON.stringify(userTickets));
+                showMsg("Sucesso! Verifique seu e-mail.");
+                navigate('tickets');
+            });
+
+        } catch (err) {
+            console.error(err);
+            showMsg("Pagamento não concluído.");
+        }
+    }
+
+    function renderTickets() {
+        const list = document.getElementById('ticketsList');
+        list.innerHTML = userTickets.map(t => `<div class="card" style="border-left:5px solid var(--green)"><h4>${t.name}</h4><p>ID: ${t.ticketId}</p></div>`).join('');
+    }
+
+    function addShow() {
+        const newShow = { id: Date.now(), name: document.getElementById('admName').value, loc: document.getElementById('admLoc').value, time: document.getElementById('admTime').value, price: document.getElementById('admPrice').value };
+        events.push(newShow); localStorage.setItem('events', JSON.stringify(events));
+        showMsg("Show postado!"); navigate('shows');
+    }
+
+    function updateUI() {
+        if(currentUser) {
+            document.getElementById('linkLogin').style.display = 'none';
+            document.getElementById('btnLogout').style.display = 'block';
+            document.getElementById('linkTickets').style.display = 'block';
+            if(currentUser.role === 'admin') document.getElementById('linkAdmin').style.display = 'block';
+        }
+    }
+
+    function showMsg(text) {
+        const t = document.getElementById('toast'); t.innerText = text;
+        t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    updateUI();
+</script>
+</body>
+</html>
